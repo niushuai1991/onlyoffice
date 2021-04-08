@@ -8,7 +8,9 @@ import org.primeframework.jwt.domain.JWT;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,36 +24,43 @@ import java.util.Scanner;
 public class IndexController {
     private static final String DocumentJwtHeader = ConfigManager.GetProperty("files.docservice.header");
 
-    @RequestMapping("/index")
-    @ResponseBody
-    public void index(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Resource
+    private DocumentManager documentManager;
+
+    @RequestMapping("/IndexServlet")
+    public ModelAndView index(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("type");
 
         if (action == null) {
-            request.getRequestDispatcher("index.jsp").forward(request, response);
-            return;
+//            request.getRequestDispatcher("index.jsp").forward(request, response);
+            return new ModelAndView("index");
         }
 
-        DocumentManager.Init(request, response);
-        PrintWriter writer = response.getWriter();
+//        PrintWriter writer = response.getWriter();
 
+        ModelAndView mv;
         switch (action.toLowerCase()) {
             case "upload":
-                Upload(request, response, writer);
+                mv = Upload(request, response);
                 break;
             case "convert":
-                Convert(request, response, writer);
+                mv = Convert(request, response);
                 break;
             case "track":
-                Track(request, response, writer);
+                mv = Track(request, response);
                 break;
             case "remove":
-                Remove(request, response, writer);
+                mv = Remove(request, response);
                 break;
+            default:
+                mv = new ModelAndView("error");
+                mv.addObject("error", "error operate");
         }
+        return mv;
     }
 
-    private static void Upload(HttpServletRequest request, HttpServletResponse response, PrintWriter writer) {
+    @RequestMapping("/IndexServlet/upload")
+    public ModelAndView Upload(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("text/plain");
 
         try {
@@ -65,21 +74,27 @@ public class IndexController {
             }
 
             long curSize = httpPostedFile.getSize();
-            if (DocumentManager.GetMaxFileSize() < curSize || curSize <= 0) {
-                writer.write("{ \"error\": \"File size is incorrect\"}");
-                return;
+            if (documentManager.GetMaxFileSize() < curSize || curSize <= 0) {
+//                writer.write("{ \"error\": \"File size is incorrect\"}");
+//                return;
+                ModelAndView mv = new ModelAndView("message");
+                mv.addObject("message", "{ \"error\": \"File size is incorrect\"}");
+                return mv;
             }
 
             String curExt = FileUtility.GetFileExtension(fileName);
-            if (!DocumentManager.GetFileExts().contains(curExt)) {
-                writer.write("{ \"error\": \"File type is not supported\"}");
-                return;
+            if (!documentManager.GetFileExts().contains(curExt)) {
+//                writer.write("{ \"error\": \"File type is not supported\"}");
+//                return;
+                ModelAndView mv = new ModelAndView("message");
+                mv.addObject("message", "{ \"error\": \"File type is not supported\"}");
+                return mv;
             }
 
             InputStream fileStream = httpPostedFile.getInputStream();
 
-            fileName = DocumentManager.GetCorrectName(fileName);
-            String fileStoragePath = DocumentManager.StoragePath(fileName, null);
+            fileName = documentManager.GetCorrectName(fileName);
+            String fileStoragePath = documentManager.StoragePath(fileName, null);
 
             File file = new File(fileStoragePath);
 
@@ -94,36 +109,41 @@ public class IndexController {
             }
 
             CookieManager cm = new CookieManager(request);
-            DocumentManager.CreateMeta(fileName, cm.getCookie("uid"), cm.getCookie("uname"));
-
-            writer.write("{ \"filename\": \"" + fileName + "\"}");
-
+            documentManager.CreateMeta(fileName, cm.getCookie("uid"), cm.getCookie("uname"));
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "{ \"filename\": \"" + fileName + "\"}");
+            return mv;
         } catch (Exception e) {
-            writer.write("{ \"error\": \"" + e.getMessage() + "\"}");
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("error", "{ \"error\": \"" + e.getMessage() + "\"}");
+            return mv;
         }
     }
 
-    private static void Convert(HttpServletRequest request, HttpServletResponse response, PrintWriter writer) {
+    private ModelAndView Convert(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("text/plain");
 
         try {
             String fileName = request.getParameter("filename");
-            String fileUri = DocumentManager.GetFileUri(fileName);
+            String fileUri = documentManager.GetFileUri(fileName);
             String fileExt = FileUtility.GetFileExtension(fileName);
             FileType fileType = FileUtility.GetFileType(fileName);
-            String internalFileExt = DocumentManager.GetInternalExtension(fileType);
+            String internalFileExt = documentManager.GetInternalExtension(fileType);
 
-            if (DocumentManager.GetConvertExts().contains(fileExt)) {
+            if (documentManager.GetConvertExts().contains(fileExt)) {
                 String key = ServiceConverter.GenerateRevisionId(fileUri);
 
-                String newFileUri = ServiceConverter.GetConvertedUri(fileUri, fileExt, internalFileExt, key, true);
+                String newFileUri = ServiceConverter.GetConvertedUri(documentManager, fileUri, fileExt, internalFileExt, key, true);
 
                 if (newFileUri.isEmpty()) {
-                    writer.write("{ \"step\" : \"0\", \"filename\" : \"" + fileName + "\"}");
-                    return;
+//                    writer.write("{ \"step\" : \"0\", \"filename\" : \"" + fileName + "\"}");
+//                    return;
+                    ModelAndView mv = new ModelAndView("message");
+                    mv.addObject("message", "{ \"step\" : \"0\", \"filename\" : \"" + fileName + "\"}");
+                    return mv;
                 }
 
-                String correctName = DocumentManager.GetCorrectName(FileUtility.GetFileNameWithoutExtension(fileName) + internalFileExt);
+                String correctName = documentManager.GetCorrectName(FileUtility.GetFileNameWithoutExtension(fileName) + internalFileExt);
 
                 URL url = new URL(newFileUri);
                 java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
@@ -133,7 +153,7 @@ public class IndexController {
                     throw new Exception("Stream is null");
                 }
 
-                File convertedFile = new File(DocumentManager.StoragePath(correctName, null));
+                File convertedFile = new File(documentManager.StoragePath(correctName, null));
                 try (FileOutputStream out = new FileOutputStream(convertedFile)) {
                     int read;
                     final byte[] bytes = new byte[1024];
@@ -153,36 +173,52 @@ public class IndexController {
                 fileName = correctName;
 
                 CookieManager cm = new CookieManager(request);
-                DocumentManager.CreateMeta(fileName, cm.getCookie("uid"), cm.getCookie("uname"));
+                documentManager.CreateMeta(fileName, cm.getCookie("uid"), cm.getCookie("uname"));
             }
 
-            writer.write("{ \"filename\" : \"" + fileName + "\"}");
-
+//            writer.write("{ \"filename\" : \"" + fileName + "\"}");
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "{ \"filename\" : \"" + fileName + "\"}");
+            return mv;
         } catch (Exception ex) {
-            writer.write("{ \"error\": \"" + ex.getMessage() + "\"}");
+//            writer.write("{ \"error\": \"" + ex.getMessage() + "\"}");
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "{ \"error\": \"" + ex.getMessage() + "\"}");
+            return mv;
         }
     }
 
-    private static void Track(HttpServletRequest request, HttpServletResponse response, PrintWriter writer) {
+    /**
+     * 文件更新同步
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping("/IndexServlet/track")
+    public ModelAndView Track(HttpServletRequest request, HttpServletResponse response) {
         String userAddress = request.getParameter("userAddress");
         String fileName = request.getParameter("fileName");
 
-        String storagePath = DocumentManager.StoragePath(fileName, userAddress);
+        String storagePath = documentManager.StoragePath(fileName, userAddress);
         String body = "";
 
-        try {
-            Scanner scanner = new Scanner(request.getInputStream());
+        try (Scanner scanner = new Scanner(request.getInputStream())){
             scanner.useDelimiter("\\A");
             body = scanner.hasNext() ? scanner.next() : "";
-            scanner.close();
         } catch (Exception ex) {
-            writer.write("get request.getInputStream error:" + ex.getMessage());
-            return;
+//            writer.write("get request.getInputStream error:" + ex.getMessage());
+//            return;
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "get request.getInputStream error:" + ex.getMessage());
+            return mv;
         }
 
         if (body.isEmpty()) {
-            writer.write("empty request.getInputStream");
-            return;
+//            writer.write("empty request.getInputStream");
+//            return;
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "empty request.getInputStream");
+            return mv;
         }
 
         JSONParser parser = new JSONParser();
@@ -192,8 +228,9 @@ public class IndexController {
             Object obj = parser.parse(body);
             jsonObj = (JSONObject) obj;
         } catch (Exception ex) {
-            writer.write("JSONParser.parse error:" + ex.getMessage());
-            return;
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "JSONParser.parse error:" + ex.getMessage());
+            return mv;
         }
 
         int status;
@@ -201,7 +238,7 @@ public class IndexController {
         String changesUri;
         String key;
 
-        if (DocumentManager.TokenEnabled()) {
+        if (documentManager.TokenEnabled()) {
             String token = (String) jsonObj.get("token");
 
             if (token == null) {
@@ -212,14 +249,16 @@ public class IndexController {
             }
 
             if (token == null || token.isEmpty()) {
-                writer.write("{\"error\":1,\"message\":\"JWT expected\"}");
-                return;
+                ModelAndView mv = new ModelAndView("message");
+                mv.addObject("message", "{\"error\":1,\"message\":\"JWT expected\"}");
+                return mv;
             }
 
-            JWT jwt = DocumentManager.ReadToken(token);
+            JWT jwt = documentManager.ReadToken(token);
             if (jwt == null) {
-                writer.write("{\"error\":1,\"message\":\"JWT validation failed\"}");
-                return;
+                ModelAndView mv = new ModelAndView("message");
+                mv.addObject("message", "{\"error\":1,\"message\":\"JWT validation failed\"}");
+                return mv;
             }
 
             if (jwt.getObject("payload") != null) {
@@ -229,8 +268,9 @@ public class IndexController {
 
                     jwt.claims = payload;
                 } catch (Exception ex) {
-                    writer.write("{\"error\":1,\"message\":\"Wrong payload\"}");
-                    return;
+                    ModelAndView mv = new ModelAndView("message");
+                    mv.addObject("message", "{\"error\":1,\"message\":\"Wrong payload\"}");
+                    return mv;
                 }
             }
 
@@ -249,8 +289,8 @@ public class IndexController {
         if (status == 2 || status == 3)//MustSave, Corrupted
         {
             try {
-                String histDir = DocumentManager.HistoryDir(storagePath);
-                String versionDir = DocumentManager.VersionDir(histDir, DocumentManager.GetFileVersion(histDir) + 1);
+                String histDir = documentManager.HistoryDir(storagePath);
+                String versionDir = documentManager.VersionDir(histDir, documentManager.GetFileVersion(histDir) + 1);
                 File ver = new File(versionDir);
                 File toSave = new File(storagePath);
 
@@ -279,23 +319,32 @@ public class IndexController {
             }
         }
 
-        writer.write("{\"error\":" + saved + "}");
+//        writer.write("{\"error\":" + saved + "}");
+        ModelAndView mv = new ModelAndView("message");
+        mv.addObject("message", "{\"error\":" + saved + "}");
+        return mv;
     }
 
-    private static void Remove(HttpServletRequest request, HttpServletResponse response, PrintWriter writer) {
+    private ModelAndView Remove(HttpServletRequest request, HttpServletResponse response) {
         try {
             String fileName = request.getParameter("filename");
-            String path = DocumentManager.StoragePath(fileName, null);
+            String path = documentManager.StoragePath(fileName, null);
 
             File f = new File(path);
             delete(f);
 
-            File hist = new File(DocumentManager.HistoryDir(path));
+            File hist = new File(documentManager.HistoryDir(path));
             delete(hist);
 
-            writer.write("{ \"success\": true }");
+//            writer.write("{ \"success\": true }");
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "{ \"success\": true }");
+            return mv;
         } catch (Exception e) {
-            writer.write("{ \"error\": \"" + e.getMessage() + "\"}");
+//            writer.write("{ \"error\": \"" + e.getMessage() + "\"}");
+            ModelAndView mv = new ModelAndView("message");
+            mv.addObject("message", "{ \"error\": \"" + e.getMessage() + "\"}");
+            return mv;
         }
     }
 

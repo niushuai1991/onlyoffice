@@ -22,7 +22,7 @@ public class FileModel
     public EditorConfig editorConfig;
     public String token;
 
-    public FileModel(String fileName, String lang, String uid, String uname, String actionData)
+    public FileModel(DocumentManager documentManager, String fileName, String lang, String uid, String uname, String actionData)
     {
         if (fileName == null) fileName = "";
         fileName = fileName.trim();
@@ -31,28 +31,28 @@ public class FileModel
 
         document = new Document();
         document.title = fileName;
-        document.url = DocumentManager.GetFileUri(fileName);
+        document.url = documentManager.GetFileUri(fileName);
         document.fileType = FileUtility.GetFileExtension(fileName).replace(".", "");
-        document.key = ServiceConverter.GenerateRevisionId(DocumentManager.CurUserHostAddress(null) + "/" + fileName + "/" + Long.toString(new File(DocumentManager.StoragePath(fileName, null)).lastModified()));
+        document.key = ServiceConverter.GenerateRevisionId(documentManager.CurUserHostAddress(null) + "/" + fileName + "/" + Long.toString(new File(documentManager.StoragePath(fileName, null)).lastModified()));
 
         editorConfig = new EditorConfig(actionData);
-        editorConfig.callbackUrl = DocumentManager.GetCallback(fileName);
+        editorConfig.callbackUrl = documentManager.GetCallback(fileName);
         if (lang != null) editorConfig.lang = lang;
 
         if (uid != null) editorConfig.user.id = uid;
         if (uname != null) editorConfig.user.name = uname;
 
-        editorConfig.customization.goback.url = DocumentManager.GetServerUrl() + "/IndexServlet";
+        editorConfig.customization.goback.url = documentManager.GetServerUrl() + "/IndexServlet";
 
-        changeType(mode, type);
+        changeType(documentManager, mode, type);
     }
 
-    public void changeType(String _mode, String _type)
+    public void changeType(DocumentManager documentManager, String _mode, String _type)
     {
         if (_mode != null) mode = _mode;
         if (_type != null) type = _type;
 
-        Boolean canEdit = DocumentManager.GetEditedExts().contains(FileUtility.GetFileExtension(document.title));
+        Boolean canEdit = documentManager.GetEditedExts().contains(FileUtility.GetFileExtension(document.title));
 
         editorConfig.mode = canEdit && !mode.equals("view") ? "edit" : "view";
 
@@ -66,7 +66,7 @@ public class FileModel
         editorConfig.InitDesktop(document.url);
     }
 
-    public void BuildToken()
+    public void BuildToken(DocumentManager documentManager)
     {
         Map<String, Object> map = new HashMap<>();
         map.put("type", type);
@@ -74,15 +74,15 @@ public class FileModel
         map.put("document", document);
         map.put("editorConfig", editorConfig);
 
-        token = DocumentManager.CreateToken(map);
+        token = documentManager.CreateToken(map);
     }
 
-    public String[] GetHistory()
+    public String[] GetHistory(DocumentManager documentManager)
     {
         JSONParser parser = new JSONParser();
-        String histDir = DocumentManager.HistoryDir(DocumentManager.StoragePath(document.title, null));
-        if (DocumentManager.GetFileVersion(histDir) > 0) {
-            Integer curVer = DocumentManager.GetFileVersion(histDir);
+        String histDir = documentManager.HistoryDir(documentManager.StoragePath(document.title, null));
+        if (documentManager.GetFileVersion(histDir) > 0) {
+            Integer curVer = documentManager.GetFileVersion(histDir);
 
             Set<Object> hist = new HashSet<Object>();
             Map<String, Object> histData = new HashMap<String, Object>();
@@ -90,7 +90,7 @@ public class FileModel
             for (Integer i = 0; i <= curVer; i++) {
                 Map<String, Object> obj = new HashMap<String, Object>();
                 Map<String, Object> dataObj = new HashMap<String, Object>();
-                String verDir = DocumentManager.VersionDir(histDir, i + 1);
+                String verDir = documentManager.VersionDir(histDir, i + 1);
 
                 try {
                     String key = null;
@@ -112,11 +112,11 @@ public class FileModel
                     }
 
                     dataObj.put("key", key);
-                    dataObj.put("url", i == curVer ? document.url : DocumentManager.GetPathUri(verDir + File.separator + "prev" + FileUtility.GetFileExtension(document.title)));
+                    dataObj.put("url", i == curVer ? document.url : documentManager.GetPathUri(verDir + File.separator + "prev" + FileUtility.GetFileExtension(document.title)));
                     dataObj.put("version", i);
 
                     if (i > 0) {
-                        JSONObject changes = (JSONObject) parser.parse(readFileToEnd(new File(DocumentManager.VersionDir(histDir, i) + File.separator + "changes.json")));
+                        JSONObject changes = (JSONObject) parser.parse(readFileToEnd(new File(documentManager.VersionDir(histDir, i) + File.separator + "changes.json")));
                         JSONObject change = (JSONObject) ((JSONArray) changes.get("changes")).get(0);
 
                         obj.put("changes", changes.get("changes"));
@@ -129,7 +129,7 @@ public class FileModel
                         prevInfo.put("key", prev.get("key"));
                         prevInfo.put("url", prev.get("url"));
                         dataObj.put("previous", prevInfo);
-                        dataObj.put("changesUrl", DocumentManager.GetPathUri(DocumentManager.VersionDir(histDir, i) + File.separator + "diff.zip"));
+                        dataObj.put("changesUrl", documentManager.GetPathUri(documentManager.VersionDir(histDir, i) + File.separator + "diff.zip"));
                     }
 
                     hist.add(obj);

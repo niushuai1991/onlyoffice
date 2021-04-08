@@ -24,12 +24,14 @@
  *
 *-->
 
-<%@page import="helpers.DocumentManager"%>
-<%@page import="helpers.FileUtility"%>
-<%@page import="helpers.ConfigManager"%>
+<%@page import="com.niushuai1991.example.onlyoffice.common.DocumentManager"%>
+<%@page import="com.niushuai1991.example.onlyoffice.common.FileUtility"%>
+<%@page import="com.niushuai1991.example.onlyoffice.common.ConfigManager"%>
 <%@page import="java.util.Calendar"%>
 <%@page import="java.io.File"%>
 <%@page import="java.net.URLEncoder"%>
+<%@ page import="org.springframework.context.ApplicationContext" %>
+<%@ page import="org.springframework.web.context.support.WebApplicationContextUtils" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
 <!DOCTYPE html>
@@ -125,8 +127,12 @@
                 </div>
             </div>
 
-            <% DocumentManager.Init(request, response); %>
-            <% File[] files = DocumentManager.GetStoredFiles(null); %>
+            <%
+                ServletContext context = request.getSession().getServletContext();
+                ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(context);
+                DocumentManager documentManager = (DocumentManager)ctx.getBean("documentManager");
+                %>
+            <% File[] files = documentManager.GetStoredFiles(null); %>
             <% if (files.length > 0) { %>
 
                 <div class="help-block">
@@ -151,7 +157,7 @@
                                             <a class="stored-edit <%= docType %>" href="EditorServlet?fileName=<%= URLEncoder.encode(files[i].getName(), "UTF-8") %>" target="_blank">
                                                 <span title="<%= files[i].getName() %>"><%= files[i].getName() %></span>
                                             </a>
-                                            <a href="<%= DocumentManager.GetFileUri(files[i].getName()) %>">
+                                            <a href="<%= documentManager.getDownloadUrl(files[i].getName()) %>">
                                                 <img class="icon-download" src="css/img/download-24.png" alt="Download" title="Download" />
                                             </a>
                                             <a class="delete-file" data-filename="<%= files[i].getName() %>">
@@ -292,8 +298,8 @@
         <script type="text/javascript" src="scripts/jscript.js"></script>
 
         <script language="javascript" type="text/javascript">
-            var ConverExtList = "<%= String.join(",", DocumentManager.GetConvertExts()) %>";
-            var EditedExtList = "<%= String.join(",", DocumentManager.GetEditedExts()) %>";
+            var ConverExtList = "<%= String.join(",", documentManager.GetConvertExts()) %>";
+            var EditedExtList = "<%= String.join(",", documentManager.GetEditedExts()) %>";
             var UrlConverter = "IndexServlet?type=convert";
             var UrlEditor = "EditorServlet";
         </script>

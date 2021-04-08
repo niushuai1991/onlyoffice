@@ -45,7 +45,7 @@ public class ServiceConverter
         }
     }
 
-    public static String GetConvertedUri(String documentUri, String fromExtension, String toExtension, String documentRevisionId, Boolean isAsync) throws Exception
+    public static String GetConvertedUri(DocumentManager documentManager, String documentUri, String fromExtension, String toExtension, String documentRevisionId, Boolean isAsync) throws Exception
     {
         fromExtension = fromExtension == null || fromExtension.isEmpty() ? FileUtility.GetFileExtension(documentUri) : fromExtension;
 
@@ -66,7 +66,7 @@ public class ServiceConverter
             body.async = true;
 
         String headerToken = "";
-        if (DocumentManager.TokenEnabled())
+        if (documentManager.TokenEnabled())
         {
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("url", body.url);
@@ -77,12 +77,12 @@ public class ServiceConverter
             if (isAsync)
                 map.put("async", body.async);
 
-            String token = DocumentManager.CreateToken(map);
+            String token = documentManager.CreateToken(map);
             body.token = token;
 
             Map<String, Object> payloadMap = new HashMap<String, Object>();
             payloadMap.put("payload", map);
-            headerToken = DocumentManager.CreateToken(payloadMap);
+            headerToken = documentManager.CreateToken(payloadMap);
         }
 
         Gson gson = new Gson();
@@ -99,7 +99,7 @@ public class ServiceConverter
         connection.setRequestProperty("Accept", "application/json");
         connection.setConnectTimeout(ConvertTimeout);
 
-        if (DocumentManager.TokenEnabled())
+        if (documentManager.TokenEnabled())
         {
             connection.setRequestProperty(DocumentJwtHeader == "" ? "Authorization" : DocumentJwtHeader, "Bearer " + headerToken);
         }

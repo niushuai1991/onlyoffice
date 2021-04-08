@@ -7,25 +7,38 @@ import org.primeframework.jwt.Verifier;
 import org.primeframework.jwt.domain.JWT;
 import org.primeframework.jwt.hmac.HMACSigner;
 import org.primeframework.jwt.hmac.HMACVerifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@Component("documentManager")
 public class DocumentManager
 {
-    private static HttpServletRequest request;
+//    private static HttpServletRequest request;
+//
+//    public void Init(HttpServletRequest req, HttpServletResponse resp)
+//    {
+//        request = req;
+//    }
 
-    public static void Init(HttpServletRequest req, HttpServletResponse resp)
-    {
-        request = req;
-    }
+    @Value("${doc.tempdir}")
+    private String tempdir;
 
-    public static long GetMaxFileSize()
+    @Value("${storage-folder}")
+    private String storageFolder;
+
+    @Value("${doc.serverUrl}")
+    private String serverUrl;
+
+    public long GetMaxFileSize()
     {
         long size;
 
@@ -41,7 +54,7 @@ public class DocumentManager
         return size > 0 ? size : 5 * 1024 * 1024;
     }
 
-    public static List<String> GetFileExts()
+    public List<String> GetFileExts()
     {
         List<String> res = new ArrayList<>();
 
@@ -52,25 +65,25 @@ public class DocumentManager
         return res;
     }
 
-    public static List<String> GetViewedExts()
+    public List<String> GetViewedExts()
     {
         String exts = ConfigManager.GetProperty("files.docservice.viewed-docs");
         return Arrays.asList(exts.split("\\|"));
     }
 
-    public static List<String> GetEditedExts()
+    public List<String> GetEditedExts()
     {
         String exts = ConfigManager.GetProperty("files.docservice.edited-docs");
         return Arrays.asList(exts.split("\\|"));
     }
 
-    public static List<String> GetConvertExts()
+    public List<String> GetConvertExts()
     {
         String exts = ConfigManager.GetProperty("files.docservice.convert-docs");
         return Arrays.asList(exts.split("\\|"));
     }
 
-    public static String CurUserHostAddress(String userAddress)
+    public String CurUserHostAddress(String userAddress)
     {
         if(userAddress == null)
         {
@@ -87,10 +100,10 @@ public class DocumentManager
         return userAddress.replaceAll("[^0-9a-zA-Z.=]", "_");
     }
 
-    public static String FilesRootPath(String userAddress)
+    public String FilesRootPath(String userAddress)
     {
         String hostAddress = CurUserHostAddress(userAddress);
-        String serverPath = request.getSession().getServletContext().getRealPath("");
+        String serverPath = tempdir;
         System.out.println("serverPath:"+serverPath);
         String storagePath = ConfigManager.GetProperty("storage-folder");
         String directory = serverPath + storagePath + File.separator + hostAddress + File.separator;
@@ -105,28 +118,28 @@ public class DocumentManager
         return directory;
     }
 
-    public static String StoragePath(String fileName, String userAddress)
+    public String StoragePath(String fileName, String userAddress)
     {
         String directory = FilesRootPath(userAddress);
         return directory + fileName;
     }
 
-    public static String HistoryDir(String storagePath)
+    public String HistoryDir(String storagePath)
     {
         return storagePath += "-hist";
     }
 
-    public static String VersionDir(String histPath, Integer version)
+    public String VersionDir(String histPath, Integer version)
     {
         return histPath + File.separator + Integer.toString(version);
     }
 
-    public static String VersionDir(String fileName, String userAddress, Integer version)
+    public String VersionDir(String fileName, String userAddress, Integer version)
     {
         return VersionDir(HistoryDir(StoragePath(fileName, userAddress)), version);
     }
 
-    public static Integer GetFileVersion(String historyPath)
+    public Integer GetFileVersion(String historyPath)
     {
         File dir = new File(historyPath);
 
@@ -142,12 +155,12 @@ public class DocumentManager
         return dirs.length;
     }
 
-    public static int GetFileVersion(String fileName, String userAddress)
+    public int GetFileVersion(String fileName, String userAddress)
     {
         return GetFileVersion(HistoryDir(StoragePath(fileName, userAddress)));
     }
 
-    public static String GetCorrectName(String fileName)
+    public String GetCorrectName(String fileName)
     {
         String baseName = FileUtility.GetFileNameWithoutExtension(fileName);
         String ext = FileUtility.GetFileExtension(fileName);
@@ -164,7 +177,7 @@ public class DocumentManager
         return name;
     }
 
-    public static void CreateMeta(String fileName, String uid, String uname) throws Exception
+    public void CreateMeta(String fileName, String uid, String uname) throws Exception
     {
         String histDir = HistoryDir(StoragePath(fileName, null));
 
@@ -182,7 +195,7 @@ public class DocumentManager
         }
     }
 
-    public static File[] GetStoredFiles(String userAddress)
+    public File[] GetStoredFiles(String userAddress)
     {
         String directory = FilesRootPath(userAddress);
 
@@ -195,7 +208,7 @@ public class DocumentManager
         });
     }
 
-    public static String CreateDemo(String fileExt, Boolean sample, String uid, String uname) throws Exception
+    public String CreateDemo(String fileExt, Boolean sample, String uid, String uname) throws Exception
     {
         String demoName = (sample ? "sample." : "new.") + fileExt;
         String fileName = GetCorrectName(demoName);
@@ -220,17 +233,31 @@ public class DocumentManager
         return fileName;
     }
 
-    public static String GetFileUri(String fileName)
+    /**
+     *
+     * @return
+     */
+    public String getDownloadUrl(String fileName){
+        try {
+            String serverPath = GetServerUrl();
+            return serverPath +"/file/" + URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8.toString()).replace("+", "%20");
+        } catch (UnsupportedEncodingException e) {
+            return "";
+        }
+    }
+
+    public String GetFileUri(String fileName)
     {
         try
         {
             String serverPath = GetServerUrl();
-            String storagePath = ConfigManager.GetProperty("storage-folder");
-            String hostAddress = CurUserHostAddress(null);
+            // 这里弃用，因为必须要把app_data目录放到webapp里，不方便服务器维护。
+//            String storagePath = ConfigManager.GetProperty("storage-folder");
+//            String hostAddress = CurUserHostAddress(null);
+//            String filePath = serverPath + "/" + storagePath + "/" + hostAddress + "/" + URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8.toString()).replace("+", "%20");
+//            return filePath;
 
-            String filePath = serverPath + "/" + storagePath + "/" + hostAddress + "/" + URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8.toString()).replace("+", "%20");
-
-            return filePath;
+            return serverPath +"/file/" + URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8.toString()).replace("+", "%20");
         }
         catch (UnsupportedEncodingException e)
         {
@@ -238,32 +265,37 @@ public class DocumentManager
         }
     }
 
-    public static String GetPathUri(String path)
+    public String GetPathUri(String path)
     {
         String serverPath = GetServerUrl();
         String storagePath = ConfigManager.GetProperty("storage-folder");
         String hostAddress = CurUserHostAddress(null);
 
         String filePath = serverPath + "/" + storagePath + "/" + hostAddress + "/" + path.replace(File.separator, "/").substring(FilesRootPath(null).length()).replace(" ", "%20");
+//        String filePath = "/" + storagePath + "/" + hostAddress + "/" + path.replace(File.separator, "/").substring(FilesRootPath(null).length()).replace(" ", "%20");
 
         return filePath;
     }
 
 
-    public static String GetServerUrl()
+//    public String GetServerUrl(HttpServletRequest request)
+//    {
+//        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+//    }
+
+    public String GetServerUrl()
     {
-        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+        return serverUrl;
     }
 
-    public static String GetCallback(String fileName)
+    public String GetCallback(String fileName)
     {
         String serverPath = GetServerUrl();
         String hostAddress = CurUserHostAddress(null);
         try
         {
-            String query = "?type=track&fileName=" + URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8.toString()) + "&userAddress=" + URLEncoder.encode(hostAddress, java.nio.charset.StandardCharsets.UTF_8.toString());
-
-            return serverPath + "/IndexServlet" + query;
+            String query = "?fileName=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()) + "&userAddress=" + URLEncoder.encode(hostAddress, StandardCharsets.UTF_8.toString());
+            return serverPath + "/IndexServlet/track" + query;
         }
         catch (UnsupportedEncodingException e)
         {
@@ -271,7 +303,7 @@ public class DocumentManager
         }
     }
 
-    public static String GetInternalExtension(FileType fileType)
+    public String GetInternalExtension(FileType fileType)
     {
         if (fileType.equals(FileType.Text))
             return ".docx";
@@ -285,7 +317,7 @@ public class DocumentManager
         return ".docx";
     }
 
-    public static String CreateToken(Map<String, Object> payloadClaims)
+    public String CreateToken(Map<String, Object> payloadClaims)
     {
         try
         {
@@ -303,7 +335,7 @@ public class DocumentManager
         }
     }
 
-    public static JWT ReadToken(String token)
+    public JWT ReadToken(String token)
     {
         try
         {
@@ -316,7 +348,7 @@ public class DocumentManager
         }
     }
 
-    public static Boolean TokenEnabled()
+    public Boolean TokenEnabled()
     {
         String secret = GetTokenSecret();
         return secret != null && !secret.isEmpty();
