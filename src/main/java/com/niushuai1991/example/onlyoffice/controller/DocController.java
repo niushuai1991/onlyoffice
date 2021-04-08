@@ -1,10 +1,13 @@
 package com.niushuai1991.example.onlyoffice.controller;
 
 
+import com.google.common.base.Throwables;
 import com.niushuai1991.example.onlyoffice.common.ConfigManager;
 import com.niushuai1991.example.onlyoffice.common.CookieManager;
 import com.niushuai1991.example.onlyoffice.common.DocumentManager;
 import com.niushuai1991.example.onlyoffice.entity.FileModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,11 +29,12 @@ import java.net.URLEncoder;
 @Controller
 public class DocController {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     @Resource
     private DocumentManager documentManager;
 
     @RequestMapping("/EditorServlet")
-    public ModelAndView editor(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+    public ModelAndView editor(HttpServletRequest request) throws IOException, ServletException {
         Cookie[] cookies = request.getCookies();
         String fileName = request.getParameter("fileName");
         String fileExt = request.getParameter("fileExt");
@@ -42,12 +46,11 @@ public class DocController {
             try
             {
                 fileName = documentManager.CreateDemo(fileExt, sampleData, cm.getCookie("uid"), cm.getCookie("uname"));
-                response.sendRedirect("EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
-                return new ModelAndView("redirect:EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
+                return new ModelAndView("redirect:/EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
             }
             catch (Exception ex)
             {
-                response.getWriter().write("Error: " + ex.getMessage());
+                logger.error(Throwables.getStackTraceAsString(ex));
                 return new ModelAndView("message").addObject("message", ex.getMessage());
             }
         }
