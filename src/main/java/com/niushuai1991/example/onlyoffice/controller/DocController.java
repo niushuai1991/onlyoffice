@@ -5,6 +5,7 @@ import com.google.common.base.Throwables;
 import com.niushuai1991.example.onlyoffice.common.ConfigManager;
 import com.niushuai1991.example.onlyoffice.common.CookieManager;
 import com.niushuai1991.example.onlyoffice.common.DocumentManager;
+import com.niushuai1991.example.onlyoffice.common.FileUtility;
 import com.niushuai1991.example.onlyoffice.entity.FileModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +64,6 @@ public class DocController {
             file.BuildToken(documentManager);
         }
 
-//        request.setAttribute("file", file);
-//        request.setAttribute("docserviceApiUrl", ConfigManager.GetProperty("files.docservice.url.api"));
-//        request.getRequestDispatcher("editor.jsp").forward(request, response);
         ModelAndView mv = new ModelAndView("editor").addObject("docserviceApiUrl", ConfigManager.GetProperty("files.docservice.url.api"));
         mv.addObject("file", file);
         return mv;
@@ -78,24 +76,24 @@ public class DocController {
     @RequestMapping("/file/{fileName}")
     @ResponseBody
     public ResponseEntity<byte[]> getfile(@PathVariable String fileName) throws IOException {
-
         String fileStoragePath = documentManager.StoragePath(fileName, null);
-        File file = new File(fileStoragePath);
-        byte[] fileBytes = new byte[0];
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); InputStream fileStream = new FileInputStream(file)) {
-            int read;
-            final byte[] bytes = new byte[1024];
-            while ((read = fileStream.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
-            }
-            out.flush();
-            fileBytes = out.toByteArray();
-        }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", new String(fileName.getBytes("utf-8"),"iso-8859-1"));
-        ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
-        return responseEntity;
+        return FileUtility.fileToResponseEntity(fileName, fileStoragePath);
     }
+
+    /**
+     * 获取文件差异信息
+     * @param fileName
+     * @param version
+     * @return
+     * @throws IOException
+     */
+    @RequestMapping("/fileDiff")
+    @ResponseBody
+    public ResponseEntity<byte[]> history(String fileName, Integer version) throws IOException {
+        String diffPath = documentManager.getDiffPath(fileName, version);
+        logger.info("下载文件差异信息:{}", diffPath);
+        return FileUtility.fileToResponseEntity("diff.zip", diffPath);
+    }
+
 
 }

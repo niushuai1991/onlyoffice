@@ -1,5 +1,6 @@
 package com.niushuai1991.example.onlyoffice.entity;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.niushuai1991.example.onlyoffice.common.DocumentManager;
@@ -8,6 +9,8 @@ import com.niushuai1991.example.onlyoffice.common.ServiceConverter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,6 +18,7 @@ import java.util.*;
 
 public class FileModel
 {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     public String type = "desktop";
     public String mode = "edit";
     public String documentType;
@@ -84,12 +88,12 @@ public class FileModel
         if (documentManager.GetFileVersion(histDir) > 0) {
             Integer curVer = documentManager.GetFileVersion(histDir);
 
-            Set<Object> hist = new HashSet<Object>();
-            Map<String, Object> histData = new HashMap<String, Object>();
+            Set<Map<String, Object>> hist = new HashSet<>();
+            Map<String, Object> histData = new HashMap<>();
 
             for (Integer i = 0; i <= curVer; i++) {
-                Map<String, Object> obj = new HashMap<String, Object>();
-                Map<String, Object> dataObj = new HashMap<String, Object>();
+                Map<String, Object> obj = new HashMap<>();
+                Map<String, Object> dataObj = new HashMap<>();
                 String verDir = documentManager.VersionDir(histDir, i + 1);
 
                 try {
@@ -113,6 +117,7 @@ public class FileModel
 
                     dataObj.put("key", key);
                     dataObj.put("url", i == curVer ? document.url : documentManager.GetPathUri(verDir + File.separator + "prev" + FileUtility.GetFileExtension(document.title)));
+//                    dataObj.put("url", documentManager.GetServerUrl() +"/file/history?fileName=" + document.title + "&version=" + i);
                     dataObj.put("version", i);
 
                     if (i > 0) {
@@ -129,13 +134,16 @@ public class FileModel
                         prevInfo.put("key", prev.get("key"));
                         prevInfo.put("url", prev.get("url"));
                         dataObj.put("previous", prevInfo);
-                        dataObj.put("changesUrl", documentManager.GetPathUri(documentManager.VersionDir(histDir, i) + File.separator + "diff.zip"));
+//                        dataObj.put("changesUrl", documentManager.GetPathUri(documentManager.VersionDir(histDir, i) + File.separator + "diff.zip"));
+                        dataObj.put("changesUrl", documentManager.getDiffUrl(document.title, i));
                     }
 
                     hist.add(obj);
                     histData.put(Integer.toString(i), dataObj);
 
-                } catch (Exception ex) { }
+                } catch (Exception ex) {
+                    logger.error(Throwables.getStackTraceAsString(ex));
+                }
             }
 
             Map<String, Object> histObj = new HashMap<String, Object>();
@@ -149,19 +157,18 @@ public class FileModel
     }
 
     private String readFileToEnd(File file) {
-        String output = "";
+        StringBuilder output = new StringBuilder();
         try {
-            try(FileInputStream is = new FileInputStream(file))
-            {
-                Scanner scanner = new Scanner(is);
+            try(FileInputStream is = new FileInputStream(file);Scanner scanner = new Scanner(is)){
                 scanner.useDelimiter("\\A");
                 while (scanner.hasNext()) {
-                    output += scanner.next();
+                    output.append(scanner.next());
                 }
-                scanner.close();
             }
-        } catch (Exception e) { }
-        return output;
+        } catch (Exception e) {
+            logger.error(Throwables.getStackTraceAsString(e));
+        }
+        return output.toString();
     }
 
     public class Document

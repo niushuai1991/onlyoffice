@@ -28,7 +28,12 @@
 package com.niushuai1991.example.onlyoffice.common;
 
 import com.niushuai1991.example.onlyoffice.entity.FileType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
+import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -132,4 +137,37 @@ public class FileUtility
             return null;
         }
     }
+
+    /**
+     * 文件转字节数组
+     *
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    public static byte[] fileToByteArray(String path) throws IOException {
+        File file = new File(path);
+        byte[] fileBytes;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); InputStream fileStream = new FileInputStream(file)) {
+            int read;
+            final byte[] bytes = new byte[1024];
+            while ((read = fileStream.read(bytes)) != -1) {
+                out.write(bytes, 0, read);
+            }
+            out.flush();
+            fileBytes = out.toByteArray();
+        }
+        return fileBytes;
+    }
+
+    public static ResponseEntity<byte[]> fileToResponseEntity(String fileName, String path) throws IOException {
+        byte[] bytes = fileToByteArray(path);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Access-Control-Allow-Origin", "*");
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", new String(fileName.getBytes("utf-8"),"iso-8859-1"));
+        ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        return responseEntity;
+    }
+
 }

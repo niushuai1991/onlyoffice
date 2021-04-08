@@ -272,19 +272,40 @@ public class DocumentManager
         String hostAddress = CurUserHostAddress(null);
 
         String filePath = serverPath + "/" + storagePath + "/" + hostAddress + "/" + path.replace(File.separator, "/").substring(FilesRootPath(null).length()).replace(" ", "%20");
-//        String filePath = "/" + storagePath + "/" + hostAddress + "/" + path.replace(File.separator, "/").substring(FilesRootPath(null).length()).replace(" ", "%20");
-
         return filePath;
     }
 
+    /**
+     * 获取差异信息的URL地址
+     * 例如： http://192.168.50.10:8087/file/diff?fileName=XXX&version=1
+     * @param fileName
+     * @return
+     */
+    public String getDiffUrl(String fileName, Integer version) {
+        String serverPath = GetServerUrl();
+        String url = serverPath + "/fileDiff?fileName=" + fileName+"&version=" + version;
+        return url;
+    }
+
+    /**
+     * 获取差异信息的文件路径地址
+     * 例如：
+     * @param fileName
+     * @param version
+     * @return
+     */
+    public String getDiffPath(String fileName, Integer version) {
+        String histDir = HistoryDir(StoragePath(fileName, null));
+        String versionDir = VersionDir(histDir, version);
+        return versionDir + File.separator + "diff.zip";
+    }
 
 //    public String GetServerUrl(HttpServletRequest request)
 //    {
 //        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
 //    }
 
-    public String GetServerUrl()
-    {
+    public String GetServerUrl(){
         return serverUrl;
     }
 
