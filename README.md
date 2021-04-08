@@ -8,7 +8,9 @@
 1. 官方demo的app_data目录必须是在项目的webapp目录中，现在可以配置在系统的任何目录，方便管理维护。
 2. 改为SpringBoot项目。
 3. 将Servlet改为了SpringMVC。
+4. 修复了获取文件差异信息时请求跨域的问题。
 
+## 部署
 
 需要依赖onlyoffice的 DocumentServer容器
 
