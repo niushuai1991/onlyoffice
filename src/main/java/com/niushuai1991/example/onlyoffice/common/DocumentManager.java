@@ -1,5 +1,6 @@
 package com.niushuai1991.example.onlyoffice.common;
 
+import com.google.common.base.Strings;
 import com.niushuai1991.example.onlyoffice.entity.FileType;
 import org.json.simple.JSONObject;
 import org.primeframework.jwt.Signer;
@@ -396,6 +397,10 @@ public class DocumentManager {
         if (file.exists()) {
             // 文件存在
             return;
+        }
+        if (Strings.isNullOrEmpty(template)) {
+            logger.info("该文档不存在，参数中也没有指定模板文件！fileName:{}", fileName);
+            throw new IOException("该文档不存在，参数中也没有指定模板文件！");
         }
         File templateFile = new File(StoragePath(template, null));
         if (!templateFile.exists()) {
