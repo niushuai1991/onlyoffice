@@ -36,7 +36,6 @@ public class DocController {
 
     @RequestMapping("/EditorServlet")
     public ModelAndView editor(HttpServletRequest request) throws IOException, ServletException {
-        Cookie[] cookies = request.getCookies();
         String fileName = request.getParameter("fileName");
         String fileExt = request.getParameter("fileExt");
         String sample = request.getParameter("sample");
@@ -68,6 +67,36 @@ public class DocController {
         mv.addObject("file", file);
         return mv;
     }
+
+    /**
+     * 编辑文档
+     * 当编辑的文档不存在时，通过传入的模板文档名来创建
+     * @param fileName
+     * @param template
+     * @return
+     * @throws IOException
+     * @throws ServletException
+     */
+    @RequestMapping("/editor")
+    public ModelAndView editor(HttpServletRequest request, String fileName, String template, String actionLink, String mode, String type) throws IOException {
+        CookieManager cm = new CookieManager(request);
+        String uid = cm.getCookie("uid");
+        String uname = cm.getCookie("uname");
+        String ulang = cm.getCookie("ulang");
+
+        documentManager.createByTemplateIfNotTxist(fileName, template, uid, uname);
+
+        FileModel file = new FileModel(documentManager, fileName, ulang, uid, uname, actionLink);
+        file.changeType(documentManager, mode, type);
+        if (documentManager.TokenEnabled()) {
+            file.BuildToken(documentManager);
+        }
+        ModelAndView mv = new ModelAndView("editor");
+        mv.addObject("docserviceApiUrl", ConfigManager.GetProperty("files.docservice.url.api"));
+        mv.addObject("file", file);
+        return mv;
+    }
+
 
     /**
      * 下载文件

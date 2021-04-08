@@ -7,6 +7,8 @@ import org.primeframework.jwt.Verifier;
 import org.primeframework.jwt.domain.JWT;
 import org.primeframework.jwt.hmac.HMACSigner;
 import org.primeframework.jwt.hmac.HMACVerifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component("documentManager")
-public class DocumentManager
-{
+public class DocumentManager {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 //    private static HttpServletRequest request;
 //
 //    public void Init(HttpServletRequest req, HttpServletResponse resp)
@@ -177,8 +179,7 @@ public class DocumentManager
         return name;
     }
 
-    public void CreateMeta(String fileName, String uid, String uname) throws Exception
-    {
+    public void CreateMeta(String fileName, String uid, String uname) throws IOException {
         String histDir = HistoryDir(StoragePath(fileName, null));
 
         File dir = new File(histDir);
@@ -265,12 +266,17 @@ public class DocumentManager
         }
     }
 
+    /**
+     * 获取文件的下载路径
+     * @param path
+     * @return
+     */
+    @Deprecated
     public String GetPathUri(String path)
     {
         String serverPath = GetServerUrl();
         String storagePath = ConfigManager.GetProperty("storage-folder");
         String hostAddress = CurUserHostAddress(null);
-
         String filePath = serverPath + "/" + storagePath + "/" + hostAddress + "/" + path.replace(File.separator, "/").substring(FilesRootPath(null).length()).replace(" ", "%20");
         return filePath;
     }
@@ -378,5 +384,33 @@ public class DocumentManager
     private static String GetTokenSecret()
     {
         return ConfigManager.GetProperty("files.docservice.secret");
+    }
+
+    /**
+     * 当编辑的文档不存在时，通过传入的模板文档名来创建。模板文档名是其它文档的名字，不是resources目录中的模板
+     * @param fileName
+     * @param template
+     */
+    public void createByTemplateIfNotTxist(String fileName, String template, String uid, String uname) throws IOException {
+        File file = new File(StoragePath(fileName, null));
+        if (file.exists()) {
+            // 文件存在
+            return;
+        }
+        File templateFile = new File(StoragePath(template, null));
+        if (!templateFile.exists()) {
+            logger.info("找不到模板文件:{}", template);
+            throw new IOException("模板文件不存在！");
+        }
+        logger.info("要编辑的文档【{}】不存在，正在从模板【{}】创建", fileName, template);
+        try (InputStream in = new FileInputStream(templateFile); OutputStream out = new FileOutputStream(file)) {
+            int read;
+            final byte[] bytes = new byte[1024];
+            while ((read = in.read(bytes)) != -1) {
+                out.write(bytes, 0, read);
+            }
+            out.flush();
+        }
+        CreateMeta(fileName, uid, uname);
     }
 }
