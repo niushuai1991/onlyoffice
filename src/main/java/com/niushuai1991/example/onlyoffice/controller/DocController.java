@@ -186,6 +186,8 @@ public class DocController {
             }
         }
         logger.info("调用docbuilder执行结果：{}", process.waitFor());
+        // 删除docbuilder文件
+        new File(tempFilePath).deleteOnExit();
         // 跳转到编辑器页面
         return new ModelAndView("redirect:/EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
     }
