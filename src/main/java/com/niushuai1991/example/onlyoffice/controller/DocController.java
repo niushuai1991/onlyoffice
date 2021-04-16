@@ -8,6 +8,9 @@ import com.niushuai1991.example.onlyoffice.common.CookieManager;
 import com.niushuai1991.example.onlyoffice.common.DocumentManager;
 import com.niushuai1991.example.onlyoffice.common.FileUtility;
 import com.niushuai1991.example.onlyoffice.entity.FileModel;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
@@ -132,14 +136,16 @@ public class DocController {
 
     /**
      * 根据模板创建
-     * @param fileName
-     * @param template
+     *
+     * @param fileName  文件名 示例：123.docx
+     * @param template  模板文件名 示例： sample.docx
+     * @param data json格式的数据，[{"name":"name","value":"张三"},{"name":"年龄","value":"20"}]
      * @return
      * @throws IOException
      * @throws InterruptedException
      */
-    @RequestMapping("/createByTemplate")
-    public ModelAndView createByTemplate(String fileName, String template) throws IOException, InterruptedException {
+    @PostMapping("/createByTemplate")
+    public ModelAndView createByTemplate(String fileName, String template, String data) throws IOException, InterruptedException {
         if (Strings.isNullOrEmpty(template)) {
             return new ModelAndView("message").addObject("message", "模板不能为空!");
         }
@@ -155,13 +161,26 @@ public class DocController {
         if (file.exists()) {
             return new ModelAndView("message").addObject("message", "文档已存在！");
         }
+        JSONArray jsonArray = new JSONArray();
+        if (!Strings.isNullOrEmpty(data)) {
+            try {
+                jsonArray = new JSONArray(data);
+            } catch (JSONException e) {
+                logger.error("data不能正确转换成json数组");
+                return new ModelAndView("message").addObject("message", "data不能转换成json数组！");
+            }
+        }
         String filePath = documentManager.StoragePath(fileName, null);
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(String.format("builder.OpenFile(\"%s\");\n", templatePath));
         stringBuilder.append("oDocument = Api.GetDocument();\n");
-        // TODO 这里要改成传参
-        stringBuilder.append("oDocument.SearchAndReplace({\"searchString\": \"${Name}\", \"replaceString\": \"张三\"});\n");
+        // 通过传参获取需要替换的数据
+        String replaceTemplate = "oDocument.SearchAndReplace({\"searchString\": \"${%s}\", \"replaceString\": \"%s\"});\n";
+        for (int i=0 ;i< jsonArray.length();i++) {
+            JSONObject json = jsonArray.getJSONObject(i);
+            stringBuilder.append(String.format(replaceTemplate, json.get("name"), json.get("value")));
+        }
         stringBuilder.append(String.format("builder.SaveFile(\"docx\", \"%s\");\n", filePath));
         stringBuilder.append("builder.CloseFile();\n");
         // 生成docbuilder文件
@@ -173,21 +192,22 @@ public class DocController {
         }
         // 调用docbuilder执行docbuilder文件
         Process process = Runtime.getRuntime().exec(docbuilderPath + " " + tempFilePath);
-        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        logger.info("调用docbuilder执行结果：{}", process.waitFor());
+        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+             BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
             String s;
             while ((s = stdInput.readLine()) != null) {
                 logger.info(s);
             }
-        }
-        try (BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            String s;
             while ((s = stdError.readLine()) != null) {
                 logger.info(s);
             }
         }
-        logger.info("调用docbuilder执行结果：{}", process.waitFor());
+        if (process != null) {
+            process.destroy();
+        }
         // 删除docbuilder文件
-        new File(tempFilePath).deleteOnExit();
+        new File(tempFilePath).delete();
         // 跳转到编辑器页面
         return new ModelAndView("redirect:/EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
     }

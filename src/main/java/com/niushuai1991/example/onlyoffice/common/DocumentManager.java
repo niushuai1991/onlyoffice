@@ -107,7 +107,6 @@ public class DocumentManager {
     {
         String hostAddress = CurUserHostAddress(userAddress);
         String serverPath = tempdir;
-        System.out.println("serverPath:"+serverPath);
         String storagePath = ConfigManager.GetProperty("storage-folder");
         String directory = serverPath + storagePath + File.separator + hostAddress + File.separator;
 
