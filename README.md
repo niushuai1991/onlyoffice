@@ -10,6 +10,12 @@
 3. 将Servlet改为了SpringMVC。
 4. 修复了获取文件差异信息时请求跨域的问题。
 
+
+## 配置
+
+**doc.serverUrl**是配置服务器的地址，比如http://192.168.1.10:8087，不能使用127.0.0.1或者localhost，
+因为这个地址需要在documentserver容器中访问。
+
 ## 部署
 
 需要依赖onlyoffice的 DocumentServer容器
@@ -20,7 +26,13 @@ docker run -i -t -d --name documentserver -p 6831:80 onlyoffice/documentserver
 
 如果需要开机启动，加上--restart=always参数。
 
-然后修改settings.properties中以files.docservice.url开头的4个配置，需要把ip改为本机的ip，不能使用127.0.0.1或localhost，
-因为在documentserver容器中访问不到。
+编译项目
 
+```
+mvn package -DskipTests
+```
 
+因为是基于SpringBoot，所以可以直接执行
+```
+java -jar onlyoffice-0.0.1-SNAPSHOT.war
+```

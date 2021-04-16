@@ -13,10 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.net.InetAddress;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -25,18 +23,9 @@ import java.util.*;
 @Component("documentManager")
 public class DocumentManager {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
-//    private static HttpServletRequest request;
-//
-//    public void Init(HttpServletRequest req, HttpServletResponse resp)
-//    {
-//        request = req;
-//    }
 
     @Value("${doc.tempdir}")
     private String tempdir;
-
-    @Value("${storage-folder}")
-    private String storageFolder;
 
     @Value("${doc.serverUrl}")
     private String serverUrl;
@@ -92,7 +81,8 @@ public class DocumentManager {
         {
             try
             {
-                userAddress = InetAddress.getLocalHost().getHostAddress();
+                URL url = new URL(serverUrl);
+                userAddress = url.getHost();
             }
             catch (Exception ex)
             {
