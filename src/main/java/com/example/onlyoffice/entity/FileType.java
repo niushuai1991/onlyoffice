@@ -25,43 +25,11 @@
 */
 
 
-package com.niushuai1991.example.onlyoffice.common;
+package com.example.onlyoffice.entity;
 
-import java.io.InputStream;
-import java.util.Properties;
-
-public class ConfigManager
+public enum FileType
 {
-    private static Properties properties;
-
-    static
-    {
-        Init();
-    }
-
-    private static void Init()
-    {
-        try
-        {
-            properties = new Properties();
-            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("settings.properties");
-            properties.load(stream);
-        }
-        catch (Exception ex)
-        {
-            properties = null;
-        }
-    }
-
-    public static String GetProperty(String name)
-    {
-        if (properties == null)
-        {
-            return "";
-        }
-
-        String property = properties.getProperty(name);
-
-        return property == null ? "" : property;
-    }
+    Text,
+    Spreadsheet,
+    Presentation
 }

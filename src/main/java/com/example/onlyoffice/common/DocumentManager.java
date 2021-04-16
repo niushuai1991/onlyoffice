@@ -1,7 +1,7 @@
-package com.niushuai1991.example.onlyoffice.common;
+package com.example.onlyoffice.common;
 
 import com.google.common.base.Strings;
-import com.niushuai1991.example.onlyoffice.entity.FileType;
+import com.example.onlyoffice.entity.FileType;
 import org.json.simple.JSONObject;
 import org.primeframework.jwt.Signer;
 import org.primeframework.jwt.Verifier;

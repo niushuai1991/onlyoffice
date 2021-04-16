@@ -1,11 +1,11 @@
-package com.niushuai1991.example.onlyoffice.entity;
+package com.example.onlyoffice.entity;
 
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.niushuai1991.example.onlyoffice.common.DocumentManager;
-import com.niushuai1991.example.onlyoffice.common.FileUtility;
-import com.niushuai1991.example.onlyoffice.common.ServiceConverter;
+import com.example.onlyoffice.common.DocumentManager;
+import com.example.onlyoffice.common.FileUtility;
+import com.example.onlyoffice.common.ServiceConverter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

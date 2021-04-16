@@ -25,9 +25,9 @@
 */
 
 
-package com.niushuai1991.example.onlyoffice.common;
+package com.example.onlyoffice.common;
 
-import com.niushuai1991.example.onlyoffice.entity.FileType;
+import com.example.onlyoffice.entity.FileType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

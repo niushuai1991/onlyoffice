@@ -1,4 +1,4 @@
-package com.niushuai1991.example.onlyoffice.common;
+package com.example.onlyoffice.common;
 
 import com.google.gson.Gson;
 import org.json.simple.JSONObject;

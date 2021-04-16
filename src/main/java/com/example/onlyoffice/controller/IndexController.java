@@ -1,7 +1,7 @@
-package com.niushuai1991.example.onlyoffice.controller;
+package com.example.onlyoffice.controller;
 
-import com.niushuai1991.example.onlyoffice.common.*;
-import com.niushuai1991.example.onlyoffice.entity.FileType;
+import com.example.onlyoffice.common.*;
+import com.example.onlyoffice.entity.FileType;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.primeframework.jwt.domain.JWT;

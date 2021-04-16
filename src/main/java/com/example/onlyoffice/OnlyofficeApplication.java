@@ -1,4 +1,4 @@
-package com.niushuai1991.example.onlyoffice;
+package com.example.onlyoffice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

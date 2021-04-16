@@ -24,9 +24,9 @@
  *
 *-->
 
-<%@page import="com.niushuai1991.example.onlyoffice.common.DocumentManager"%>
-<%@page import="com.niushuai1991.example.onlyoffice.common.FileUtility"%>
-<%@page import="com.niushuai1991.example.onlyoffice.common.ConfigManager"%>
+<%@page import="com.example.onlyoffice.common.DocumentManager"%>
+<%@page import="com.example.onlyoffice.common.FileUtility"%>
+<%@page import="com.example.onlyoffice.common.ConfigManager"%>
 <%@page import="java.util.Calendar"%>
 <%@page import="java.io.File"%>
 <%@page import="java.net.URLEncoder"%>

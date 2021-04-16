@@ -1,13 +1,13 @@
-package com.niushuai1991.example.onlyoffice.controller;
+package com.example.onlyoffice.controller;
 
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.niushuai1991.example.onlyoffice.common.ConfigManager;
-import com.niushuai1991.example.onlyoffice.common.CookieManager;
-import com.niushuai1991.example.onlyoffice.common.DocumentManager;
-import com.niushuai1991.example.onlyoffice.common.FileUtility;
-import com.niushuai1991.example.onlyoffice.entity.FileModel;
+import com.example.onlyoffice.common.ConfigManager;
+import com.example.onlyoffice.common.CookieManager;
+import com.example.onlyoffice.common.DocumentManager;
+import com.example.onlyoffice.common.FileUtility;
+import com.example.onlyoffice.entity.FileModel;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

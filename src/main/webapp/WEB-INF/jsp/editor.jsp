@@ -1,5 +1,5 @@
-<%@page import="com.niushuai1991.example.onlyoffice.entity.FileModel"%>
-<%@ page import="com.niushuai1991.example.onlyoffice.common.DocumentManager" %>
+<%@page import="com.example.onlyoffice.entity.FileModel"%>
+<%@ page import="com.example.onlyoffice.common.DocumentManager" %>
 <%@ page import="org.springframework.web.context.support.WebApplicationContextUtils" %>
 <%@ page import="org.springframework.context.ApplicationContext" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>

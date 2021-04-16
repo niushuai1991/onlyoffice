@@ -1,4 +1,4 @@
-package com.niushuai1991.example.onlyoffice;
+package com.example.onlyoffice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
