@@ -170,10 +170,12 @@ public class FileUtility
         return responseEntity;
     }
 
-    public static void writeFile(String tempFile, InputStream in) throws IOException {
+    public static void writeFile(String tempFile, InputStream in, String charset) throws IOException {
         File file = new File(tempFile);
         String sTempOneLine;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in));FileWriter writer = new FileWriter(file)) {
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, "utf-8"));BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(file), charset))) {
             while ((sTempOneLine = reader.readLine()) != null){
                 writer.append(sTempOneLine).append("\n");
             }

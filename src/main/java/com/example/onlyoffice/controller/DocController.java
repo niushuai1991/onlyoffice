@@ -144,7 +144,7 @@ public class DocController {
      * @throws IOException
      * @throws InterruptedException
      */
-    @PostMapping("/createByTemplate")
+    @RequestMapping("/createByTemplate")
     public ModelAndView createByTemplate(String fileName, String template, String data) throws IOException, InterruptedException {
         if (Strings.isNullOrEmpty(template)) {
             return new ModelAndView("message").addObject("message", "模板不能为空!");
@@ -188,7 +188,7 @@ public class DocController {
         String tempFilePath = documentManager.StoragePath(tempFile, null);
         logger.info("生成docbuilder文件:{}", tempFilePath);
         try (InputStream in = new ByteArrayInputStream(stringBuilder.toString().getBytes())) {
-            FileUtility.writeFile(tempFilePath, in);
+            FileUtility.writeFile(tempFilePath, in, "UTF-8");
         }
         // 调用docbuilder执行docbuilder文件
         Process process = Runtime.getRuntime().exec(docbuilderPath + " " + tempFilePath);
