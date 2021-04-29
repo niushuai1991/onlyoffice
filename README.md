@@ -13,7 +13,7 @@
 
 ## 配置
 
-**doc.serverUrl**是配置服务器的地址，比如http://192.168.1.10:8087，不能使用127.0.0.1或者localhost，
+**doc.serverUrl**是配置服务器的地址，比如http://本机IP:8087，不能使用127.0.0.1或者localhost，
 因为这个地址需要在documentserver容器中访问。
 
 ## 部署
@@ -41,4 +41,4 @@ java -jar onlyoffice.war
 java -Dfile.encoding=utf-8 -jar onlyoffice.war
 ```
 
-打开浏览器访问[http://localhost:8087](http://localhost:8087)
+打开浏览器访问http://本机IP:8087
