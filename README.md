@@ -32,7 +32,11 @@ docker run -i -t -d --name documentserver -p 6831:80 onlyoffice/documentserver
 mvn package -DskipTests
 ```
 
-因为是基于SpringBoot，所以可以直接执行
+运行项目
 ```
-java -jar onlyoffice-0.0.1-SNAPSHOT.war
+java -jar onlyoffice.war
+```
+由于每个系统的默认编码可能不一样，项目如果是在非UTF-8编码下工作时可能部分功能（如创建docbuilder文件）时会乱码，如果是在win系统运行建议手动指定编码。
+```
+java -Dfile.encoding=utf-8 -jar onlyoffice.war
 ```
