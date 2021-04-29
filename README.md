@@ -40,3 +40,5 @@ java -jar onlyoffice.war
 ```
 java -Dfile.encoding=utf-8 -jar onlyoffice.war
 ```
+
+打开浏览器访问[http://localhost:8087](http://localhost:8087)
