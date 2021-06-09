@@ -9,7 +9,7 @@
 2. 改为SpringBoot项目。
 3. 将Servlet改为了SpringMVC。
 4. 修复了获取文件差异信息时请求跨域的问题。
-
+5. 添加了doc.lang配置，优先以该配置作为onlyoffice的界面语言
 
 ## 配置
 

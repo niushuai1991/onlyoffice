@@ -42,6 +42,8 @@ public class DocController {
     private DocumentManager documentManager;
     @Value("${docbuilder.path}")
     private String docbuilderPath;
+    @Value("${doc.lang}")
+    private String lang;
 
     @RequestMapping("/EditorServlet")
     public ModelAndView editor(HttpServletRequest request) throws IOException, ServletException {
@@ -50,6 +52,7 @@ public class DocController {
         String sample = request.getParameter("sample");
         Boolean sampleData = (sample == null || sample.isEmpty()) ? false : sample.toLowerCase().equals("true");
         CookieManager cm = new CookieManager(request);
+        String ulang = Strings.isNullOrEmpty(lang) ? cm.getCookie("ulang") : lang;
         if (fileExt != null)
         {
             try
@@ -64,7 +67,7 @@ public class DocController {
             }
         }
 
-        FileModel file = new FileModel(documentManager, fileName, cm.getCookie("ulang"), cm.getCookie("uid"), cm.getCookie("uname"), request.getParameter("actionLink"));
+        FileModel file = new FileModel(documentManager, fileName, ulang, cm.getCookie("uid"), cm.getCookie("uname"), request.getParameter("actionLink"));
         file.changeType(documentManager, request.getParameter("mode"), request.getParameter("type"));
 
         if (documentManager.TokenEnabled())
@@ -91,7 +94,7 @@ public class DocController {
         CookieManager cm = new CookieManager(request);
         String uid = cm.getCookie("uid");
         String uname = cm.getCookie("uname");
-        String ulang = cm.getCookie("ulang");
+        String ulang = Strings.isNullOrEmpty(lang) ? cm.getCookie("ulang") : lang;
 
         documentManager.createByTemplateIfNotTxist(fileName, template, uid, uname);
 
