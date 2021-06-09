@@ -19,10 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
@@ -147,22 +144,27 @@ public class DocController {
      * @throws IOException
      * @throws InterruptedException
      */
-    @RequestMapping("/createByTemplate")
-    public ModelAndView createByTemplate(String fileName, String template, String data) throws IOException, InterruptedException {
+    @PostMapping("/createByTemplate")
+    @ResponseBody
+    @CrossOrigin
+    public String createByTemplate(String fileName, String template, String data) throws IOException, InterruptedException {
+        String message="";
         if (Strings.isNullOrEmpty(template)) {
-            return new ModelAndView("message").addObject("message", "模板不能为空!");
+            return message="模板不能为空!";
         }
         if (Strings.isNullOrEmpty(fileName)) {
-            return new ModelAndView("message").addObject("message", "文件不能为空!");
+            return message="文件不能为空!";
         }
         String templatePath = documentManager.StoragePath(template, null);
         File templateFile = new File(templatePath);
+        String fileNamePath = documentManager.StoragePath(fileName, null);
         if (!templateFile.exists()) {
-            return new ModelAndView("message").addObject("message", "模板文件不存在！");
+            return message="模板文件不存在!";
         }
-        File file = new File(fileName);
+        File file = new File(fileNamePath);
         if (file.exists()) {
-            return new ModelAndView("message").addObject("message", "文档已存在！");
+            String url=fileName;
+            return url;
         }
         JSONArray jsonArray = new JSONArray();
         if (!Strings.isNullOrEmpty(data)) {
@@ -170,7 +172,7 @@ public class DocController {
                 jsonArray = new JSONArray(data);
             } catch (JSONException e) {
                 logger.error("data不能正确转换成json数组");
-                return new ModelAndView("message").addObject("message", "data不能转换成json数组！");
+                return message="data不能正确转换成json数组!";
             }
         }
         String filePath = documentManager.StoragePath(fileName, null);
@@ -212,8 +214,10 @@ public class DocController {
         // 删除docbuilder文件
         new File(tempFilePath).delete();
         // 跳转到编辑器页面
-        return new ModelAndView("redirect:/EditorServlet?fileName=" + URLEncoder.encode(fileName, "UTF-8"));
+        String url=fileName;
+        return url;
     }
+
 
 
 }
